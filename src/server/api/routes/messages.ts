@@ -69,6 +69,85 @@ const enhanceResponse = (originalResponse: string, userQuery: string): string =>
   return `${originalResponse} I'd be happy to provide more detailed information or help you explore this topic further. Could you please let me know what specific aspects you'd like me to elaborate on? I can provide examples, explanations, or discuss related concepts to give you a more comprehensive understanding.`;
 };
 
+// Helper function to create personalized prompts using retrieved context
+const createPersonalizedPrompt = (userQuery: string, retrievedContext: string): string => {
+  // If no context is available, return the original query
+  if (!retrievedContext || retrievedContext.trim().length === 0) {
+    return userQuery;
+  }
+
+  // Create a personalized prompt that instructs the AI to use the context
+  const personalizedPrompt = `You are having a conversation with a user who has been working on various projects and has discussed technical topics with you before. 
+
+IMPORTANT: You must respond in a personalized way that references our previous conversations and the user's specific projects/implementations.
+
+CRITICAL INSTRUCTIONS:
+1. ALWAYS use personal pronouns ("your project", "you implemented", "we discussed", "your IoT dashboard", "your React component")
+2. Reference specific details from the context when answering
+3. Distinguish between general advice and the user's specific implementations
+4. If the context mentions their projects (IoT dashboard, React components, etc.), refer to those specifically
+5. Make the response feel like a natural continuation of our conversation
+6. If they ask about something we discussed before, reference that specific discussion
+7. Be conversational and personal, not generic
+
+CONTEXT FROM OUR PREVIOUS CONVERSATIONS:
+${retrievedContext}
+
+USER'S CURRENT QUESTION:
+${userQuery}
+
+Remember: This is a continuation of our conversation. Respond as if you remember their specific projects and implementations. Use personal pronouns and reference our previous discussions.`;
+
+  return personalizedPrompt;
+};
+
+// Helper function to generate personalized response using OpenAI
+const generatePersonalizedResponse = async (userQuery: string, retrievedContext: string): Promise<string> => {
+  try {
+    // If no context available, fall back to basic response
+    if (!retrievedContext || retrievedContext.trim().length === 0) {
+      console.log('⚠️ [MESSAGES API] No context available for personalized response');
+      return 'I apologize, but I don\'t have enough context from our previous conversations to provide a personalized response. Could you please provide more details about what you\'d like to know?';
+    }
+
+    // Create personalized prompt
+    const personalizedPrompt = createPersonalizedPrompt(userQuery, retrievedContext);
+    
+    console.log('🎯 [MESSAGES API] Creating personalized prompt with context length:', retrievedContext.length);
+    console.log('📝 [MESSAGES API] User query:', userQuery.substring(0, 100) + (userQuery.length > 100 ? '...' : ''));
+    console.log('🔍 [MESSAGES API] Context preview:', retrievedContext.substring(0, 200) + (retrievedContext.length > 200 ? '...' : ''));
+    
+    // Use OpenAI service to generate personalized response
+    const response = await openaiService.generateResponse(
+      'personalized-response',
+      personalizedPrompt,
+      [], // No additional context needed since it's in the prompt
+      retrievedContext // Pass context as provided context
+    );
+
+    console.log('✅ [MESSAGES API] Personalized response generated successfully');
+    console.log('💬 [MESSAGES API] Response preview:', response.substring(0, 200) + (response.length > 200 ? '...' : ''));
+    
+    // Check if response is personalized
+    const isPersonalized = response.toLowerCase().includes('your ') || 
+                          response.toLowerCase().includes('you ') || 
+                          response.toLowerCase().includes('we discussed') ||
+                          response.toLowerCase().includes('your project');
+    
+    if (isPersonalized) {
+      console.log('✅ [MESSAGES API] Response contains personal references');
+    } else {
+      console.log('⚠️ [MESSAGES API] Response may not be sufficiently personalized');
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('❌ [MESSAGES API] Failed to generate personalized response:', error);
+    // Fallback to basic response
+    return 'I apologize, but I\'m having trouble accessing our conversation history right now. Could you please provide more details about what you\'d like to know?';
+  }
+};
+
 const router = express.Router();
 
 /**
@@ -205,8 +284,21 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
       });
     }
 
-    // 3. Use the answer from RAG as the AI response
-    const aiResponseContent = ragAnswer || 'Sorry, I could not generate a response.';
+    // 3. Generate personalized response using retrieved context
+    console.log('🎯 [MESSAGES API] Generating personalized response...');
+    let aiResponseContent = '';
+    
+    if (ragContext && ragContext.trim().length > 0) {
+      // Use personalized response generation with context
+      console.log('🔗 [MESSAGES API] Using retrieved context for personalized response');
+      aiResponseContent = await generatePersonalizedResponse(content, ragContext);
+      console.log('✅ [MESSAGES API] Personalized response generated successfully');
+    } else {
+      // Fallback to RAG answer if no context available
+      console.log('⚠️ [MESSAGES API] No context available, using RAG answer as fallback');
+      aiResponseContent = ragAnswer || 'Sorry, I could not generate a response.';
+    }
+    
     console.log('💬 [MESSAGES API] AI Response content:', aiResponseContent.substring(0, 100) + (aiResponseContent.length > 100 ? '...' : ''));
 
     // 4. Enhance the response if it's too short
@@ -581,8 +673,20 @@ router.post('/generate', asyncHandler(async (req: Request, res: Response) => {
       console.error('Failed to fetch RAG answer/context:', e);
     }
 
-    // 3. Use the answer from RAG as the AI response
-    const aiResponseContent = ragAnswer || 'Sorry, I could not generate a response.';
+    // 3. Generate personalized response using retrieved context
+    console.log('🎯 [MESSAGES API] Generating personalized response for /generate endpoint...');
+    let aiResponseContent = '';
+    
+    if (ragContext && ragContext.trim().length > 0) {
+      // Use personalized response generation with context
+      console.log('🔗 [MESSAGES API] Using retrieved context for personalized response');
+      aiResponseContent = await generatePersonalizedResponse(userMessage, ragContext);
+      console.log('✅ [MESSAGES API] Personalized response generated successfully');
+    } else {
+      // Fallback to RAG answer if no context available
+      console.log('⚠️ [MESSAGES API] No context available, using RAG answer as fallback');
+      aiResponseContent = ragAnswer || 'Sorry, I could not generate a response.';
+    }
 
     // 4. Enhance the response if it's too short
     const enhancedResponse = enhanceResponse(aiResponseContent, userMessage);
