@@ -576,9 +576,9 @@ export default function MessageInput({ onSend, disabled = false, dark = false, u
   };
 
   return (
-    <div className={`flex flex-col gap-2 p-4 ${dark ? 'bg-gray-800' : 'bg-white'} border-t`}>
-      {/* Import Chat Button and File Input */}
-      <div className="flex items-center gap-2 mb-2">
+    <div className={`flex flex-col gap-2 p-2 rounded-xl ${dark ? 'bg-gray-800' : 'bg-white'} border-t max-w-2xl mx-auto w-full mb-10`}>
+      {/* Import Chat Button and File Input - HIDDEN FOR NOW */}
+      {/* <div className="flex items-center gap-2 mb-2">
         <Button type="button" variant="outline" onClick={handleImportChatClick} disabled={disabled}>
           Import Chat
         </Button>
@@ -590,7 +590,17 @@ export default function MessageInput({ onSend, disabled = false, dark = false, u
           onChange={handleImportFileChange}
         />
         {importError && <span className="text-red-500 text-xs ml-2">{importError}</span>}
-      </div>
+      </div> */}
+      
+      {/* Hidden file input for import functionality - keeping the functionality */}
+      <input
+        type="file"
+        accept=".json"
+        ref={importFileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleImportFileChange}
+      />
+      
       {/* Preview Dialog for Imported Chat */}
       <Dialog open={isImportPreviewOpen} onOpenChange={setIsImportPreviewOpen}>
         <DialogContent>
@@ -678,76 +688,77 @@ export default function MessageInput({ onSend, disabled = false, dark = false, u
         </div>
       )}
 
-      <div className="flex items-center gap-2">
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileSelect}
-          className="hidden"
-          multiple
-          accept="image/*,.pdf,.txt,.doc,.docx"
-        />
-        <input
-          type="file"
-          ref={documentInputRef}
-          onChange={handleDocumentSelect}
-          className="hidden"
-          accept=".pdf"
-        />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleDocumentButtonClick}
-          disabled={disabled || isSending}
-          className="h-8 w-8"
-        >
-          <FileText className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleFileButtonClick}
-          disabled={disabled || isSending}
-          className="h-8 w-8"
-        >
-          <Paperclip className="h-4 w-4" />
-        </Button>
-        <Input
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
-          disabled={disabled || isSending}
-          className={`flex-1 ${dark ? 'bg-gray-700 text-white' : 'bg-gray-100'}`}
-        />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleMicClick}
-          disabled={disabled || isSending}
-          className={`text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ${
-            isRecording ? 'text-red-500' : ''
-          }`}
-        >
-          {isTranscribing ? (
-            <Loader2 size={20} className="animate-spin" />
-          ) : (
-            <Mic size={20} />
-          )}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleSend}
-          disabled={disabled || isSending || (!message.trim() && selectedFiles.length === 0 && selectedImages.length === 0)}
-          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-        >
-          {isSending ? (
-            <Loader2 size={20} className="animate-spin" />
-          ) : (
-            <Send size={20} />
-          )}
-        </Button>
+      {/* Centered input row */}
+      <div className="flex justify-center">
+        <div className="flex items-center gap-2 rounded-xl bg-transparent min-h-[40px] max-w-2xl w-full mx-auto">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            className="hidden"
+            multiple
+            accept="image/*,.pdf,.txt,.doc,.docx"
+          />
+          <input
+            type="file"
+            ref={documentInputRef}
+            onChange={handleDocumentSelect}
+            className="hidden"
+            accept=".pdf"
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDocumentButtonClick}
+            disabled={disabled || isSending}
+            className="h-8 w-8"
+          >
+            <FileText className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleFileButtonClick}
+            disabled={disabled || isSending}
+            className="h-8 w-8"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          <Input
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a message..."
+            disabled={disabled || isSending}
+            className={`flex-1 h-9 px-3 py-1 rounded-lg ${dark ? 'bg-gray-700 text-white' : 'bg-gray-100'} border-none`}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleMicClick}
+            disabled={disabled || isSending}
+            className={`text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ${isRecording ? 'text-red-500' : ''} h-8 w-8`}
+          >
+            {isTranscribing ? (
+              <Loader2 size={20} className="animate-spin" />
+            ) : (
+              <Mic size={20} />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleSend}
+            disabled={disabled || isSending || (!message.trim() && selectedFiles.length === 0 && selectedImages.length === 0)}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 h-8 w-8"
+          >
+            {isSending ? (
+              <Loader2 size={20} className="animate-spin" />
+            ) : (
+              <Send size={20} />
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Image Preview Dialog */}
