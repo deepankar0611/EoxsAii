@@ -38,14 +38,14 @@ async function ensureDbConnection() {
   }
 }
 
-export default async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Ensure database connection
     await ensureDbConnection();
     
     // Handle the request using Express
     return new Promise((resolve, reject) => {
-      app(req, res, (err) => {
+      app(req, res, (err: any) => {
         if (err) {
           reject(err);
         } else {

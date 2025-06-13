@@ -4,7 +4,7 @@
  * Supports user and AI messages, message formatting, and loading states.
  * Features message timestamps and copy functionality.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { Copy, ChevronDown, FileText, Image, Link, FileIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,6 +13,7 @@ import TypingIndicator from "./TypingIndicator";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlockRenderer from './CodeBlockRenderer';
+import React from 'react';
 
 type FileAttachment = {
   filename: string;
@@ -38,7 +39,7 @@ type MessageListProps = {
   className?: string;
 };
 
-export default function MessageList({ 
+export default React.memo(function MessageList({ 
   messages, 
   isLoading = false,
   isGeneratingResponse = false,
@@ -87,12 +88,12 @@ export default function MessageList({
   }, [messages]);
 
   // Handle completion of animation
-  const handleAnimationComplete = () => {
+  const handleAnimationComplete = useCallback(() => {
     setCurrentlyAnimatingId(null);
-  };
+  }, []);
 
-  // Render file attachments
-  const renderFiles = (files: FileAttachment[]) => {
+  // Render file attachments - memoized to prevent unnecessary re-renders
+  const renderFiles = useCallback((files: FileAttachment[]) => {
     return (
       <div className="flex flex-wrap gap-2 mt-2">
         {files.map((file, index) => {
@@ -152,7 +153,65 @@ export default function MessageList({
         })}
       </div>
     );
-  };
+  }, []);
+
+  // Memoize the ReactMarkdown components to prevent re-creation on every render
+  const markdownComponents = useMemo(() => ({
+    code: CodeBlockRenderer as any,
+    p: ({ node, ...props }: any) => <p className="mb-2" {...props} />,
+    a: ({ node, ...props }: any) => <a className="text-blue-500 hover:underline" {...props} />,
+    ul: ({ node, ...props }: any) => <ul className="list-disc list-inside mb-2" {...props} />,
+    ol: ({ node, ...props }: any) => <ol className="list-decimal list-inside mb-2" {...props} />,
+    li: ({ node, ...props }: any) => <li className="mb-1" {...props} />,
+    h1: ({ node, ...props }: any) => <h1 className="text-2xl font-bold mb-4 mt-6" {...props} />,
+    h2: ({ node, ...props }: any) => <h2 className="text-xl font-bold mb-3 mt-5" {...props} />,
+    h3: ({ node, ...props }: any) => <h3 className="text-lg font-bold mb-2 mt-4" {...props} />,
+    h4: ({ node, ...props }: any) => <h4 className="text-base font-bold mb-2 mt-3" {...props} />,
+    blockquote: ({ node, ...props }: any) => (
+      <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4 text-gray-600 dark:text-gray-400" {...props} />
+    ),
+    table: ({ node, ...props }: any) => (
+      <div className="overflow-x-auto my-4">
+        <table className="min-w-full border-collapse border border-gray-300 dark:border-gray-700" {...props} />
+      </div>
+    ),
+    thead: ({ node, ...props }: any) => (
+      <thead className="bg-gray-100 dark:bg-gray-800" {...props} />
+    ),
+    tbody: ({ node, ...props }: any) => (
+      <tbody className="divide-y divide-gray-300 dark:divide-gray-700" {...props} />
+    ),
+    tr: ({ node, ...props }: any) => (
+      <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50" {...props} />
+    ),
+    th: ({ node, ...props }: any) => (
+      <th className="px-4 py-2 text-left font-semibold border border-gray-300 dark:border-gray-700" {...props} />
+    ),
+    td: ({ node, ...props }: any) => (
+      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700" {...props} />
+    ),
+    hr: ({ node, ...props }: any) => (
+      <hr className="my-4 border-t border-gray-300 dark:border-gray-700" {...props} />
+    ),
+    img: ({ node, ...props }: any) => (
+      <img className="max-w-full h-auto rounded-lg my-4" {...props} />
+    ),
+    pre: ({ node, ...props }: any) => (
+      <pre className="mb-4" {...props} />
+    ),
+  }), []);
+
+  // Memoize the copy handler to prevent unnecessary re-renders
+  const handleCopy = useCallback((messageId: string, content: string) => {
+    navigator.clipboard.writeText(content);
+    setCopiedId(messageId);
+    setTimeout(() => setCopiedId(null), 1200);
+  }, []);
+
+  // Memoize the scroll to bottom handler
+  const handleScrollToBottom = useCallback(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
   return (
     <div className={cn("relative", className)}>
@@ -197,50 +256,7 @@ export default function MessageList({
                         ) : (
                           <ReactMarkdown 
                             remarkPlugins={[remarkGfm]}
-                            components={{
-                              code: CodeBlockRenderer as any,
-                              p: ({ node, ...props }) => <p className="mb-2" {...props} />,
-                              a: ({ node, ...props }) => <a className="text-blue-500 hover:underline" {...props} />,
-                              ul: ({ node, ...props }) => <ul className="list-disc list-inside mb-2" {...props} />,
-                              ol: ({ node, ...props }) => <ol className="list-decimal list-inside mb-2" {...props} />,
-                              li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                              h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mb-4 mt-6" {...props} />,
-                              h2: ({ node, ...props }) => <h2 className="text-xl font-bold mb-3 mt-5" {...props} />,
-                              h3: ({ node, ...props }) => <h3 className="text-lg font-bold mb-2 mt-4" {...props} />,
-                              h4: ({ node, ...props }) => <h4 className="text-base font-bold mb-2 mt-3" {...props} />,
-                              blockquote: ({ node, ...props }) => (
-                                <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4 text-gray-600 dark:text-gray-400" {...props} />
-                              ),
-                              table: ({ node, ...props }) => (
-                                <div className="overflow-x-auto my-4">
-                                  <table className="min-w-full border-collapse border border-gray-300 dark:border-gray-700" {...props} />
-                                </div>
-                              ),
-                              thead: ({ node, ...props }) => (
-                                <thead className="bg-gray-100 dark:bg-gray-800" {...props} />
-                              ),
-                              tbody: ({ node, ...props }) => (
-                                <tbody className="divide-y divide-gray-300 dark:divide-gray-700" {...props} />
-                              ),
-                              tr: ({ node, ...props }) => (
-                                <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50" {...props} />
-                              ),
-                              th: ({ node, ...props }) => (
-                                <th className="px-4 py-2 text-left font-semibold border border-gray-300 dark:border-gray-700" {...props} />
-                              ),
-                              td: ({ node, ...props }) => (
-                                <td className="px-4 py-2 border border-gray-300 dark:border-gray-700" {...props} />
-                              ),
-                              hr: ({ node, ...props }) => (
-                                <hr className="my-4 border-t border-gray-300 dark:border-gray-700" {...props} />
-                              ),
-                              img: ({ node, ...props }) => (
-                                <img className="max-w-full h-auto rounded-lg my-4" {...props} />
-                              ),
-                              pre: ({ node, ...props }) => (
-                                <pre className="mb-4" {...props} />
-                              ),
-                            }}
+                            components={markdownComponents}
                           >
                             {message.content}
                           </ReactMarkdown>
@@ -266,11 +282,7 @@ export default function MessageList({
                           isLast ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                         )}
                         title={copiedId === message.id ? "Copied!" : "Copy"}
-                        onClick={() => {
-                          navigator.clipboard.writeText(message.content);
-                          setCopiedId(message.id);
-                          setTimeout(() => setCopiedId(null), 1200);
-                        }}
+                        onClick={() => handleCopy(message.id, message.content)}
                       >
                         <Copy className={cn("h-4 w-4", copiedId === message.id ? "text-green-500" : "")} />
                       </button>
@@ -296,7 +308,7 @@ export default function MessageList({
       {showScrollButton && (
         <button
           className="absolute right-6 bottom-8 z-10 p-2 rounded-full bg-background shadow-lg border border-border hover:bg-muted transition-colors"
-          onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
+          onClick={handleScrollToBottom}
           aria-label="Scroll to bottom"
         >
           <ChevronDown className="h-6 w-6 text-muted-foreground" />
@@ -304,4 +316,4 @@ export default function MessageList({
       )}
     </div>
   );
-}
+});

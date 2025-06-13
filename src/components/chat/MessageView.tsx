@@ -2,12 +2,13 @@
  * MessageView.tsx
  * Component for displaying chat messages with optional RAG context
  */
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { format } from 'date-fns';
 import { Bot, FileText, User } from 'lucide-react';
 import { RagContextDisplay } from '../RagContextDisplay';
+import React from 'react';
 
 export interface MessageViewProps {
   content: string;
@@ -22,9 +23,13 @@ export interface MessageViewProps {
   context?: string;
 }
 
-export function MessageView({ content, sender, timestamp, files, context }: MessageViewProps) {
+export const MessageView = React.memo(function MessageView({ content, sender, timestamp, files, context }: MessageViewProps) {
   const [showContext, setShowContext] = useState(false);
   const isAI = sender === 'system' || sender === 'ai';
+  
+  const handleToggleContext = useCallback(() => {
+    setShowContext(!showContext);
+  }, [showContext]);
   
   return (
     <div className={`message-container py-6 ${isAI ? 'bg-muted/30' : ''}`}>
@@ -82,7 +87,7 @@ export function MessageView({ content, sender, timestamp, files, context }: Mess
             {isAI && context && (
               <div className="mt-2 flex items-center">
                 <button
-                  onClick={() => setShowContext(!showContext)}
+                  onClick={handleToggleContext}
                   className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
                 >
                   <Bot size={12} />
@@ -106,4 +111,4 @@ export function MessageView({ content, sender, timestamp, files, context }: Mess
       </div>
     </div>
   );
-} 
+}); 
