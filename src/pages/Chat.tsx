@@ -56,7 +56,7 @@ const Chat = () => {
     }
     return false;
   });
-  
+
   // Helper function to normalize message format
   const normalizeMessage = (msgData: any, isAI = false): Message => {
     const msg = msgData.data || msgData;
@@ -68,35 +68,35 @@ const Chat = () => {
       files: undefined // AI and backend messages never have files now
     };
   };
-  
+
   // Generate a mock ID for development testing
   const generateMockId = () => `mock_${Math.random().toString(36).substring(2, 9)}`;
-  
+
   // Fetch user's threads
-  const { 
-    data: threads = [], 
+  const {
+    data: threads = [],
     refetch: refetchThreads,
     isLoading: isThreadsLoading,
-    error: threadsError 
+    error: threadsError
   } = useQuery({
     queryKey: ['threads', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      
+
       console.log("Fetching threads for user:", user.id);
-      
+
       const response = await fetch(`/api/threads?userId=${user.id}`);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch threads: ${response.status}`);
       }
-      
+
       const responseData = await response.json();
       console.log("Fetched threads response:", responseData);
-      
+
       // Handle different response structures to ensure we get the threads array
       let threadsData = [];
-      
+
       if (responseData.data && Array.isArray(responseData.data)) {
         // If data is directly an array
         threadsData = responseData.data;
@@ -110,7 +110,7 @@ const Chat = () => {
         console.warn("Unexpected response format for threads:", responseData);
         threadsData = [];
       }
-      
+
       // Transform the API thread format to our front-end format
       return threadsData.map((thread: any) => ({
         id: thread._id || thread.id,
@@ -125,35 +125,35 @@ const Chat = () => {
   const createThreadMutation = useMutation({
     mutationFn: async (title: string) => {
       if (!user?.id) throw new Error('User not authenticated');
-      
+
       console.log("Creating new thread with title:", title);
-      
+
       const response = await fetch('/api/threads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           userId: user.id,
           title,
           email: user.primaryEmailAddress?.emailAddress || 'unknown'
         })
       });
-      
+
       if (!response.ok) {
         const errorData = await response.text();
         throw new Error(`Failed to create thread: ${response.status} - ${errorData}`);
       }
-      
+
       return await response.json();
     },
     onSuccess: (data) => {
       console.log("Thread created:", data);
       queryClient.invalidateQueries({ queryKey: ['threads', user?.id] });
-      
+
       // Extract the ID correctly from the response structure
-      const threadId = data.id || 
-                      (data.data && data.data.id) || 
-                      (data.data && data.data._id);
-      
+      const threadId = data.id ||
+        (data.data && data.data.id) ||
+        (data.data && data.data._id);
+
       if (!threadId) {
         console.error("Failed to get thread ID from response:", data);
         toast({
@@ -164,11 +164,11 @@ const Chat = () => {
         setIsCreatingThread(false);
         return;
       }
-      
+
       setSelectedThreadId(threadId);
       setMessages([]);
       setIsCreatingThread(false);
-      
+
       console.log("✅ [FRONTEND] New thread created and selected:", threadId);
     },
     onError: (error) => {
@@ -188,13 +188,13 @@ const Chat = () => {
       try {
         console.log("Deleting thread:", threadId);
         let response;
-        
+
         try {
           // Include userId as a query parameter as required by the API
           response = await fetch(`/api/threads/${threadId}?userId=${user?.id}`, {
             method: 'DELETE'
           });
-          
+
           if (!response.ok) throw new Error('Failed to delete thread');
           return threadId;
         } catch (e) {
@@ -209,14 +209,14 @@ const Chat = () => {
     },
     onSuccess: (threadId) => {
       queryClient.invalidateQueries({ queryKey: ['threads', user?.id] });
-      
+
       const remainingThreads = threads.filter(thread => thread.id !== threadId);
-      
+
       if (selectedThreadId === threadId) {
         setSelectedThreadId(remainingThreads.length > 0 ? remainingThreads[0].id : null);
         setMessages([]);
       }
-      
+
       toast({
         title: "Conversation deleted",
       });
@@ -234,23 +234,23 @@ const Chat = () => {
   const updateThreadTitle = async (threadId: string, content: string) => {
     try {
       // Extract first 20 characters and add ellipsis if needed
-      const threadTitle = content.trim().length > 20 
+      const threadTitle = content.trim().length > 20
         ? content.trim().slice(0, 20) + '...'
         : content.trim();
-      
+
       const response = await fetch(`/api/threads/${threadId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           userId: user?.id,
           title: threadTitle
         })
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to update thread title');
       }
-      
+
       // Invalidate threads query to refresh the list
       queryClient.invalidateQueries({ queryKey: ['threads', user?.id] });
     } catch (error) {
@@ -261,21 +261,21 @@ const Chat = () => {
   // Fetch messages for selected thread
   const fetchMessages = async (threadId: string) => {
     if (!threadId || !user?.id) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       console.log("Fetching messages for thread:", threadId);
-      
+
       const response = await fetch(`/api/threads/${threadId}/messages?userId=${user.id}`);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch messages: ${response.status}`);
       }
-      
+
       const data = await response.json();
       console.log("Fetched messages:", data);
-      
+
       // Handle both array and object API responses
       let messagesArray = [];
       if (Array.isArray(data.data)) {
@@ -285,7 +285,7 @@ const Chat = () => {
       } else {
         messagesArray = [];
       }
-      
+
       // Transform the API message format to our front-end format
       const formattedMessages = messagesArray.map((msg: any) => ({
         id: msg._id || msg.id,
@@ -294,7 +294,7 @@ const Chat = () => {
         timestamp: new Date(msg.timestamp || msg.createdAt),
         files: msg.files,
       }));
-      
+
       setMessages(formattedMessages);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -333,7 +333,7 @@ const Chat = () => {
     setIsCreatingThread(true);
     setSelectedThreadId(null);
     setMessages([]);
-    
+
     // Create a thread with default title
     createThreadMutation.mutate('New Chat');
   };
@@ -361,7 +361,7 @@ const Chat = () => {
         const response = await createThreadMutation.mutateAsync(content.slice(0, 50) + "...");
         // Wait a moment for the thread to be set, then continue with sending the message
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         // Now that we have a thread, continue with sending the message
         console.log("✅ [FRONTEND] Thread created, now sending message to thread:", selectedThreadId);
       } catch (error) {
@@ -375,11 +375,11 @@ const Chat = () => {
 
     try {
       let uploadedFiles: FileAttachment[] = [];
-      
+
       console.log("handleSendMessage - isDocumentQuery:", isDocumentQuery);
       console.log("handleSendMessage - files:", files);
       console.log("handleSendMessage - files.length:", files ? files.length : 0);
-      
+
       // Upload files first if there are any
       if (files && files.length > 0) {
         console.log("Processing files:", files.map(f => ({ name: f.name, type: f.type, size: f.size })));
@@ -427,7 +427,7 @@ const Chat = () => {
 
       let response;
       let aiResponseData;
-      
+
       if (isDocumentQuery && files && files.length > 0) {
         console.log("Processing document query with files:", files.map(f => f.name));
         // Handle document query
@@ -527,7 +527,7 @@ const Chat = () => {
 
       // Extract the AI response content from the data structure
       let aiContent = "";
-      
+
       if (aiResponseData?.data?.content) {
         aiContent = aiResponseData.data.content;
         console.log("Found content in standard format:", aiContent);
@@ -551,7 +551,7 @@ const Chat = () => {
         console.error("Empty AI response content:", aiResponseData);
         throw new Error("Received empty response from API");
       }
-      
+
       // Add AI response to the UI
       const aiMessage: Message = {
         id: generateMockId(),
@@ -572,7 +572,7 @@ const Chat = () => {
 
     } catch (error) {
       console.error("❌ [FRONTEND] Error in handleSendMessage:", error);
-      
+
       // Only show error toast and message for actual API failures
       if (error instanceof Error && (
         error.message.includes("Failed to upload") ||
@@ -644,14 +644,14 @@ const Chat = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId })
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to update thread titles');
       }
-      
+
       const result = await response.json();
       console.log('Thread titles update result:', result);
-      
+
       // Refresh threads list
       queryClient.invalidateQueries({ queryKey: ['threads', userId] });
     } catch (error) {
@@ -693,12 +693,25 @@ const Chat = () => {
           {/* Left: EoxsAI branding */}
           <div className={`flex items-center ${!sidebarOpen ? 'pl-10' : ''}`}>
             <button
-              className="text-2xl font-bold tracking-tight text-primary focus:outline-none transition-colors px-3 py-1 rounded-lg hover:bg-muted"
               onClick={handleNewThread}
               aria-label="Start new chat"
+              className="focus:outline-none"
             >
-              EoxsAI
+              {/* Light mode logo */}
+              <img
+                src="src/components/auth/assets/logo-dark.png"
+                alt="EoxsAI Logo"
+                className="h-8 w-auto object-contain px-2 py-1 hover:opacity-80 transition-opacity dark:hidden"
+              />
+              {/* Dark mode logo */}
+              <img
+                src="src/components/auth/assets/logoo.png"
+                alt="EoxsAI Logo Dark"
+                className="h-8 w-auto object-contain px-2 py-1 hover:opacity-80 transition-opacity hidden dark:block"
+              />
             </button>
+
+
           </div>
           {/* Right: Dark mode toggle and UserButton */}
           <div className="flex items-center gap-3">
@@ -716,14 +729,14 @@ const Chat = () => {
         </div>
         {/* Chat Content */}
         <div className="flex-1 overflow-y-auto">
-          <MessageList 
-            messages={messages} 
-            isLoading={isLoading} 
+          <MessageList
+            messages={messages}
+            isLoading={isLoading}
             isGeneratingResponse={isGeneratingResponse}
           />
         </div>
-        
-        <MessageInput 
+
+        <MessageInput
           onSend={handleSendMessage}
           disabled={(isLoading && !isCreatingThread) || isThreadsLoading || isGeneratingResponse}
           dark={isDark}
