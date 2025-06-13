@@ -19,6 +19,7 @@ import SignUp from "./pages/SignUp";
 import { RequireAuth } from "./components/auth/RequireAuth";
 import { useUserSync } from "./lib/userService";
 import clientConfig from './lib/client-config';
+import AuthCallback from "./pages/AuthCallback";
 
 // Use client-side config for Clerk key
 const PUBLISHABLE_KEY = clientConfig.clerkKey;
@@ -48,6 +49,10 @@ const App = () => (
             {/* Auth Routes */}
             <Route path="/sign-in/*" element={<SignIn />} />
             <Route path="/sign-up/*" element={<SignUp />} />
+            
+            {/* Clerk/OAuth Callback Routes */}
+            <Route path="/sso-callback" element={<AuthCallback />} />
+            <Route path="/auth-callback" element={<AuthCallback />} />
             
             {/* Protected Routes */}
             <Route 
