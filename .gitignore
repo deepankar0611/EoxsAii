@@ -20,6 +20,15 @@ dist
 dist-ssr
 *.local
 
+# Copied API dependencies (generated at build time)
+api/config.ts
+api/lib/
+api/models/
+api/types/
+api/api/
+api/services/
+api/scripts/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
