@@ -223,6 +223,7 @@ router.post('/audio-to-text', upload.single('audio'), async (req: MulterRequest,
       mimetype: req.file.mimetype
     });
 
+    const openaiService = new OpenAIService();
     const text = await openaiService.transcribeAudio(req.file.buffer, req.file.originalname);
     
     if (!text) {

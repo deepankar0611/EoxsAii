@@ -203,8 +203,8 @@ router.get('/threads', asyncHandler(async (req: Request, res: Response) => {
     const threads = await Thread.find().lean();
     // Get all userIds
     const userIds = Array.from(new Set(threads.map(t => t.userId)));
-    const objectIdUserIds = userIds.filter(id => mongoose.Types.ObjectId.isValid(id)).map(id => id.toString());
-    const stringUserIds = userIds.filter(id => !mongoose.Types.ObjectId.isValid(id) && !!id);
+    const objectIdUserIds = userIds.filter(id => mongoose.Types.ObjectId.isValid(id as string)).map(id => (id as string).toString());
+    const stringUserIds = userIds.filter(id => !mongoose.Types.ObjectId.isValid(id as string) && !!id) as string[];
 
     // Find users by _id (ObjectId) and by clerkId (string)
     const usersById = objectIdUserIds.length
@@ -264,7 +264,7 @@ router.get('/threads/:id/messages', asyncHandler(async (req: Request, res: Respo
 
     // Only use valid ObjectIds for lookup
     const userIds = Array.from(new Set(messages.map(msg => msg.sender).filter(s => s && s !== 'ai' && s !== 'system')));
-    const objectIdUserIds = userIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+    const objectIdUserIds = userIds.filter(id => mongoose.Types.ObjectId.isValid(id as string)) as string[];
     const users = objectIdUserIds.length
       ? await User.find({ _id: { $in: objectIdUserIds } }).select('name').lean()
       : [];

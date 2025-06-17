@@ -36,7 +36,7 @@ export async function extractClerkUser(req: Request, res: Response, next: NextFu
     
     // Mock verification for development
     // In production, use Clerk's SDK to verify tokens
-    if (config.app.isProduction) {
+    if (process.env.NODE_ENV === 'production') {
       // Production verification would use Clerk SDK:
       // const { userId } = await clerk.verifyToken(token);
       // if (!userId) throw new UnauthorizedError('Invalid token');
@@ -97,7 +97,7 @@ export function isAdminEmail(email: string): boolean {
   const lowerEmail = email.toLowerCase();
   
   // Get admin emails from config
-  const adminEmails = config.auth.adminEmails.map(e => e.toLowerCase());
+  const adminEmails = config.adminEmails.map(e => e.toLowerCase());
   
   // Check if the email is in the admin list
   return adminEmails.includes(lowerEmail);
