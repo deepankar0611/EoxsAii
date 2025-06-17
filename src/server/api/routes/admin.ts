@@ -374,13 +374,13 @@ router.get('/analytics', asyncHandler(async (req: Request, res: Response) => {
     const totalMessages = await Message.countDocuments();
 
     // Get recent activity (last 10 actions)
-    const recentMessages = await Message.find()
+    const recentMessages = await Message.find({})
       .sort({ createdAt: -1 })
       .limit(5)
       .populate('threadId', 'title')
       .lean();
 
-    const recentThreads = await Thread.find()
+    const recentThreads = await Thread.find({})
       .sort({ createdAt: -1 })
       .limit(5)
       .populate('userId', 'name')

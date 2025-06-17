@@ -9,11 +9,15 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "noImplicitAny": false,
     "noUnusedParameters": false,
     "skipLibCheck": true,
     "allowJs": true,
     "noUnusedLocals": false,
-    "strictNullChecks": false
+    "strictNullChecks": false,
+    "strict": false,
+    "noImplicitThis": false,
+    "noImplicitReturns": false
   }
 }
