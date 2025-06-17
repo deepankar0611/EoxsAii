@@ -1,9 +1,9 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import { connectToDatabase } from './lib/db';
-import config from './config';
-import apiRoutes from './api';
+import { connectToDatabase } from './lib/db.js';
+import config from './config.js';
+import apiRoutes from './api/index.js';
 
 const app = express();
 

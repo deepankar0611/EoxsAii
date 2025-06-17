@@ -51,9 +51,12 @@ function fixImportPaths(filePath) {
       { from: "import { isTrivialMessage } from '../../../utils/messageUtils.js'", to: "import { isTrivialMessage } from '../../utils/messageUtils'" },
       { from: "import { embeddingService, openaiService } from '../index.js'", to: "import { embeddingService, openaiService } from '../index'" },
       
-      // Remove .js extensions from all imports
+      // Remove .js extensions from all imports first
       { from: /from '([^']+)\.js'/g, to: "from '$1'" },
-      { from: /from "([^"]+)\.js"/g, to: 'from "$1"' }
+      { from: /from "([^"]+)\.js"/g, to: 'from "$1"' },
+      
+      // For main api/index.ts file imports
+      { from: "import apiRoutes from './api';", to: "import apiRoutes from './api/index';" },
     ];
     
     // Apply mappings
