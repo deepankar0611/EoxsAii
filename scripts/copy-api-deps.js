@@ -8,13 +8,13 @@ function copyDirSync(src, dest) {
   if (!fs.existsSync(dest)) {
     fs.mkdirSync(dest, { recursive: true });
   }
-  
+
   const entries = fs.readdirSync(src, { withFileTypes: true });
-  
+
   for (let entry of entries) {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
-    
+
     if (entry.isDirectory()) {
       copyDirSync(srcPath, destPath);
     } else {
@@ -28,21 +28,21 @@ function fixImportPaths(filePath) {
   if (!fs.existsSync(filePath) || !filePath.endsWith('.ts')) {
     return;
   }
-  
+
   try {
     let content = fs.readFileSync(filePath, 'utf8');
     let modified = false;
-    
+
     // Define import path mappings for different file locations
     const importMappings = [
       // For files in api/lib/
       { from: "import config from '../server/config'", to: "import config from '../config'" },
-      
+
       // For files in api/services/
       { from: "import { IMessage, Message } from '../../models/message.js'", to: "import { IMessage, Message } from '../models/message'" },
       { from: "import { IMessage } from '../../models/message.js'", to: "import { IMessage } from '../models/message'" },
       { from: "import { EmbeddingService } from './embeddingService.js'", to: "import { EmbeddingService } from './embeddingService'" },
-      
+
       // For files in api/api/routes/
       { from: "import { Message, IMessage } from '../../../models/message.js'", to: "import { Message, IMessage } from '../../models/message'" },
       { from: "import { Thread } from '../../../models/thread.js'", to: "import { Thread } from '../../models/thread'" },
@@ -50,15 +50,16 @@ function fixImportPaths(filePath) {
       { from: "} from '../middleware.js'", to: "} from '../middleware'" },
       { from: "import { isTrivialMessage } from '../../../utils/messageUtils.js'", to: "import { isTrivialMessage } from '../../utils/messageUtils'" },
       { from: "import { embeddingService, openaiService } from '../index.js'", to: "import { embeddingService, openaiService } from '../index'" },
-      
-      // Remove .js extensions from all imports first
-      { from: /from '([^']+)\.js'/g, to: "from '$1'" },
-      { from: /from "([^"]+)\.js"/g, to: 'from "$1"' },
-      
+
+      // Replace .ts extensions in imports with .js for runtime compatibility
+      { from: /from '([^']+)\.ts'/g, to: "from '$1.js'" },
+      { from: /from "([^"]+)\.ts"/g, to: 'from "$1.js"' },
+
+
       // For main api/index.ts file imports
       { from: "import apiRoutes from './api';", to: "import apiRoutes from './api/index';" },
     ];
-    
+
     // Apply mappings
     for (const mapping of importMappings) {
       if (typeof mapping.from === 'string') {
@@ -74,7 +75,7 @@ function fixImportPaths(filePath) {
         }
       }
     }
-    
+
     if (modified) {
       fs.writeFileSync(filePath, content, 'utf8');
       console.log(`    🔧 Fixed import paths in ${path.relative('api', filePath)}`);
@@ -87,12 +88,12 @@ function fixImportPaths(filePath) {
 // Function to recursively fix import paths in a directory
 function fixImportPathsInDir(dir) {
   if (!fs.existsSync(dir)) return;
-  
+
   const entries = fs.readdirSync(dir, { withFileTypes: true });
-  
+
   for (let entry of entries) {
     const fullPath = path.join(dir, entry.name);
-    
+
     if (entry.isDirectory()) {
       fixImportPathsInDir(fullPath);
     } else if (entry.name.endsWith('.ts')) {
@@ -121,7 +122,7 @@ dependencies.forEach(({ src, dest }) => {
       for (let entry of entries) {
         const srcPath = path.join(src, entry.name);
         const destPath = path.join(dest, entry.name);
-        
+
         if (entry.isDirectory()) {
           copyDirSync(srcPath, destPath);
         } else {
