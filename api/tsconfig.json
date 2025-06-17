@@ -1,0 +1,22 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "allowJs": true,
+    "baseUrl": "../",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "typeRoots": ["../node_modules/@types", "../src/types"]
+  },
+  "include": ["*.ts", "../src/server/**/*.ts", "../src/lib/**/*.ts", "../src/models/**/*.ts", "../src/types/**/*.ts"],
+  "exclude": ["node_modules"]
+} 

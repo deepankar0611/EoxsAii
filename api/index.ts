@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { connectToDatabase } from '../src/server/lib/db';
 import config from '../src/server/config';
@@ -43,9 +43,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Ensure database connection
     await ensureDbConnection();
     
-    // Handle the request using Express
+    // Handle the request using Express with proper type casting
     return new Promise((resolve, reject) => {
-      app(req, res, (err: any) => {
+      app(req as any as Request, res as any as Response, (err: any) => {
         if (err) {
           reject(err);
         } else {
