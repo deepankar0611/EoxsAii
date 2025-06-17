@@ -30,7 +30,8 @@ const dependencies = [
   { src: 'src/server', dest: 'api' },
   { src: 'src/models', dest: 'api/models' },
   { src: 'src/lib', dest: 'api/lib' },
-  { src: 'src/types', dest: 'api/types' }
+  { src: 'src/types', dest: 'api/types' },
+  { src: 'src/utils', dest: 'api/utils' }
 ];
 
 dependencies.forEach(({ src, dest }) => {
