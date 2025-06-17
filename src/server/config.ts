@@ -1,4 +1,4 @@
-/**
+    /**
  * config.ts
  * Simple configuration file that loads environment variables
  */
