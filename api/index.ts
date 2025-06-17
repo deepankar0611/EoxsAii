@@ -40,6 +40,8 @@ async function ensureDbConnection() {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
+    console.log(`🚀 API Request: ${req.method} ${req.url}`);
+    
     // Ensure database connection
     await ensureDbConnection();
     
@@ -47,6 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return new Promise((resolve, reject) => {
       app(req as any as Request, res as any as Response, (err: any) => {
         if (err) {
+          console.error('Express app error:', err);
           reject(err);
         } else {
           resolve(undefined);
@@ -54,7 +57,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     });
   } catch (error) {
-    console.error('Handler error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('❌ Handler error:', error);
+    
+    // Provide more detailed error information
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const statusCode = error instanceof Error && error.message.includes('MongoDB') ? 503 : 500;
+    
+    res.status(statusCode).json({ 
+      error: 'Internal server error',
+      message: errorMessage,
+      timestamp: new Date().toISOString()
+    });
   }
 } 

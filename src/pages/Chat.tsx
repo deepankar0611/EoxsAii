@@ -712,13 +712,13 @@ const Chat = () => {
             >
               {/* Light mode logo */}
               <img
-                src="src/components/auth/assets/logo-dark.png"
+                src="/images/logo-dark.png"
                 alt="EoxsAI Logo"
                 className="h-8 w-auto object-contain px-2 py-1 hover:opacity-80 transition-opacity dark:hidden"
               />
               {/* Dark mode logo */}
               <img
-                src="src/components/auth/assets/logoo.png"
+                src="/images/logoo.png"
                 alt="EoxsAI Logo Dark"
                 className="h-8 w-auto object-contain px-2 py-1 hover:opacity-80 transition-opacity hidden dark:block"
               />
